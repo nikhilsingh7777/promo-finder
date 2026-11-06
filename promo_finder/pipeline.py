@@ -54,7 +54,7 @@ def run_pipeline(episodes: dict[int, Episode], roster: list[dict], todo: list[in
                 cands = baseline_episode(episodes[n], episodes, cfg)
             else:
                 cands = propose_episode(episodes[n], episodes, roster, llm, cfg)
-                judge_episode(cands, episodes, llm, n)
+                judge_episode(cands, episodes, llm, n, cfg)
             f.write_text(json.dumps([c.model_dump() for c in cands], ensure_ascii=False),
                          encoding="utf-8")
             ok = sum(1 for c in cands if c.validation and c.validation.passed)
@@ -75,6 +75,7 @@ def run_pipeline(episodes: dict[int, Episode], roster: list[dict], todo: list[in
                                and c.repair_attempts == 0),
         "repaired": sum(1 for c in all_cands if c.repair_attempts > 0),
         "ranked_after_dedupe": len(ranked),
+        "episodes_by_proposer_model": _count_models(all_cands),
         "seconds_this_session": round(time.time() - t0, 1),
         "llm_usage_this_session": llm.usage if llm else {},
         "models": {} if no_llm else {r: llm.model_for(r) for r in
@@ -85,6 +86,13 @@ def run_pipeline(episodes: dict[int, Episode], roster: list[dict], todo: list[in
     }
     write_reports(run_dir, ranked, all_cands, editor, stats, cfg["ranking"]["final_n"])
     return ranked
+
+
+def _count_models(cands: list[Candidate]) -> dict:
+    eps: dict[str, set] = {}
+    for c in cands:
+        eps.setdefault(c.proposer_model or "unknown", set()).update(c.episodes)
+    return {m: len(v) for m, v in eps.items()}
 
 
 def editor_note(top: list[Candidate], episodes: dict[int, Episode], llm: LLMClient

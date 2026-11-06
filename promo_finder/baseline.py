@@ -73,6 +73,7 @@ def baseline_episode(ep: Episode, episodes: dict[int, Episode], cfg: dict,
             hook_description="keyword/punctuation heuristic", cliffhanger_description="",
             why_it_works=f"heuristic score {score:.1f}", confidence=min(1.0, score / 8))
         c = validate(Candidate(id=f"E{ep.number:02d}-B{len(out) + 1}", episodes=[ep.number],
+                               proposer_model="baseline-heuristic",
                                proposal=prop), episodes, rules)
         if c.validation.passed:
             c.scores = {"heuristic": round(score, 2)}

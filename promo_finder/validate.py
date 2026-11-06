@@ -15,8 +15,6 @@ from __future__ import annotations
 from .models import Candidate, Episode, Event, EventType, Segment, Validation
 from .parse import fmt_time
 
-CLIFF_TAIL_MAX_S = 4.0       # promo may continue at most this long after the cliffhanger ends
-
 
 def _ep_of(event_id: str) -> int | None:
     try:
@@ -134,13 +132,13 @@ def validate(cand: Candidate, episodes: dict[int, Episode], rules: dict) -> Cand
         # R5 cliffhanger at the end
         if cliff.ep != last.ep or not last.start <= cliff.start <= last.end + 0.01:
             errors.append("cliffhanger event is not inside the last segment")
-        elif last.end - cliff.end > CLIFF_TAIL_MAX_S:
+        elif last.end - cliff.end > rules["cliff_tail_max_s"]:
             errors.append(f"promo continues {last.end - cliff.end:.1f} s after the cliffhanger; "
-                          f"cut within {CLIFF_TAIL_MAX_S:.0f} s of it")
+                          f"cut within {rules['cliff_tail_max_s']:.0f} s of it")
         ep = episodes[last.ep]
         later = [e for e in ep.events if e.start >= last.end - 0.01 and e.type != EventType.CAMERA]
         val.ends_at_episode_end = not later
-        cand.after_cut = [_label(e) for e in later[:3]]
+        cand.after_cut = [_label(e) for e in later[: rules.get("after_cut_events", 3)]]
         if val.ends_at_episode_end:
             warnings.append("promo ends at the episode's own ending")
         cand.cliffhanger_text = _label(cliff)

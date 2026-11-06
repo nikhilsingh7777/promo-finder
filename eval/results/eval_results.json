@@ -1,0 +1,262 @@
+{
+  "run": "outputs/full",
+  "rule_audit": {
+    "final_promos": 90,
+    "rule_violations": []
+  },
+  "gold_llm": {
+    "summary": {
+      "gold_promos": 8,
+      "hit_any_iou>=0.5": 6,
+      "hit_any_iou>=0.3": 7,
+      "hit_top1_iou>=0.5": 4,
+      "same_hook_line": 2,
+      "mean_best_iou": 0.68,
+      "mean_start_error_s": 9.8,
+      "mean_end_error_s": 4.8
+    },
+    "rows": [
+      {
+        "episode": 5,
+        "gold": "00:06.80-00:58.20",
+        "tool_candidates": 2,
+        "best_match": "E05-C1",
+        "best_match_span": "00:06.50-00:52.00",
+        "best_iou": 0.87,
+        "best_match_rank_in_episode": 1,
+        "top1_iou": 0.87,
+        "start_error_s": 0.3,
+        "end_error_s": 6.2,
+        "same_hook_line": true
+      },
+      {
+        "episode": 9,
+        "gold": "00:06.30-00:55.20",
+        "tool_candidates": 2,
+        "best_match": "E09-C1",
+        "best_match_span": "00:01.70-00:55.60",
+        "best_iou": 0.91,
+        "best_match_rank_in_episode": 2,
+        "top1_iou": 0.0,
+        "start_error_s": 4.6,
+        "end_error_s": 0.4,
+        "same_hook_line": false
+      },
+      {
+        "episode": 12,
+        "gold": "00:26.80-01:09.20",
+        "tool_candidates": 2,
+        "best_match": "E12-C1",
+        "best_match_span": "00:26.80-01:09.60",
+        "best_iou": 0.99,
+        "best_match_rank_in_episode": 1,
+        "top1_iou": 0.99,
+        "start_error_s": 0.0,
+        "end_error_s": 0.4,
+        "same_hook_line": true
+      },
+      {
+        "episode": 20,
+        "gold": "00:15.40-00:42.40",
+        "tool_candidates": 2,
+        "best_match": "E20-C1",
+        "best_match_span": "00:18.70-00:56.40",
+        "best_iou": 0.58,
+        "best_match_rank_in_episode": 2,
+        "top1_iou": 0.0,
+        "start_error_s": 3.3,
+        "end_error_s": 14.0,
+        "same_hook_line": false
+      },
+      {
+        "episode": 28,
+        "gold": "00:12.70-00:48.00",
+        "tool_candidates": 3,
+        "best_match": "E28-C1",
+        "best_match_span": "00:28.20-00:57.00",
+        "best_iou": 0.45,
+        "best_match_rank_in_episode": 3,
+        "top1_iou": 0.0,
+        "start_error_s": 15.5,
+        "end_error_s": 9.0,
+        "same_hook_line": false
+      },
+      {
+        "episode": 35,
+        "gold": "01:47.00-02:30.00",
+        "tool_candidates": 1,
+        "best_match": "E35-C2",
+        "best_match_span": "02:17.00-02:37.50",
+        "best_iou": 0.26,
+        "best_match_rank_in_episode": 1,
+        "top1_iou": 0.26,
+        "start_error_s": 30.0,
+        "end_error_s": 7.5,
+        "same_hook_line": false
+      },
+      {
+        "episode": 42,
+        "gold": "00:11.20-00:39.80",
+        "tool_candidates": 2,
+        "best_match": "E42-C1",
+        "best_match_span": "00:00.70-00:40.20",
+        "best_iou": 0.72,
+        "best_match_rank_in_episode": 1,
+        "top1_iou": 0.72,
+        "start_error_s": 10.5,
+        "end_error_s": 0.4,
+        "same_hook_line": false
+      },
+      {
+        "episode": 49,
+        "gold": "01:58.20-02:24.00",
+        "tool_candidates": 1,
+        "best_match": "E49-C2",
+        "best_match_span": "01:43.90-02:24.75",
+        "best_iou": 0.63,
+        "best_match_rank_in_episode": 1,
+        "top1_iou": 0.63,
+        "start_error_s": 14.3,
+        "end_error_s": 0.8,
+        "same_hook_line": false
+      }
+    ]
+  },
+  "gold_baseline": {
+    "summary": {
+      "gold_promos": 8,
+      "hit_any_iou>=0.5": 4,
+      "hit_any_iou>=0.3": 6,
+      "hit_top1_iou>=0.5": 0,
+      "same_hook_line": 2,
+      "mean_best_iou": 0.43,
+      "mean_start_error_s": 11.5,
+      "mean_end_error_s": 19.3
+    },
+    "rows": [
+      {
+        "episode": 5,
+        "gold": "00:06.80-00:58.20",
+        "tool_candidates": 2,
+        "best_match": "E05-B2",
+        "best_match_span": "00:06.50-00:46.20",
+        "best_iou": 0.76,
+        "best_match_rank_in_episode": 2,
+        "top1_iou": 0.07,
+        "start_error_s": 0.3,
+        "end_error_s": 12.0,
+        "same_hook_line": true
+      },
+      {
+        "episode": 9,
+        "gold": "00:06.30-00:55.20",
+        "tool_candidates": 1,
+        "best_match": "E09-B1",
+        "best_match_span": "00:37.70-01:31.80",
+        "best_iou": 0.2,
+        "best_match_rank_in_episode": 1,
+        "top1_iou": 0.2,
+        "start_error_s": 31.4,
+        "end_error_s": 36.6,
+        "same_hook_line": false
+      },
+      {
+        "episode": 12,
+        "gold": "00:26.80-01:09.20",
+        "tool_candidates": 2,
+        "best_match": "E12-B2",
+        "best_match_span": "00:43.70-01:14.20",
+        "best_iou": 0.54,
+        "best_match_rank_in_episode": 2,
+        "top1_iou": 0.27,
+        "start_error_s": 16.9,
+        "end_error_s": 5.0,
+        "same_hook_line": false
+      },
+      {
+        "episode": 20,
+        "gold": "00:15.40-00:42.40",
+        "tool_candidates": 2,
+        "best_match": "E20-B2",
+        "best_match_span": "00:15.10-00:50.20",
+        "best_iou": 0.77,
+        "best_match_rank_in_episode": 2,
+        "top1_iou": 0.0,
+        "start_error_s": 0.3,
+        "end_error_s": 7.8,
+        "same_hook_line": true
+      },
+      {
+        "episode": 28,
+        "gold": "00:12.70-00:48.00",
+        "tool_candidates": 3,
+        "best_match": "E28-B2",
+        "best_match_span": "00:20.30-01:04.90",
+        "best_iou": 0.53,
+        "best_match_rank_in_episode": 2,
+        "top1_iou": 0.0,
+        "start_error_s": 7.6,
+        "end_error_s": 16.9,
+        "same_hook_line": false
+      },
+      {
+        "episode": 35,
+        "gold": "01:47.00-02:30.00",
+        "tool_candidates": 2,
+        "best_match": "E35-B2",
+        "best_match_span": "01:29.50-02:05.90",
+        "best_iou": 0.31,
+        "best_match_rank_in_episode": 2,
+        "top1_iou": 0.0,
+        "start_error_s": 17.5,
+        "end_error_s": 24.1,
+        "same_hook_line": false
+      },
+      {
+        "episode": 42,
+        "gold": "00:11.20-00:39.80",
+        "tool_candidates": 1,
+        "best_match": "E42-B1",
+        "best_match_span": "00:17.90-01:12.80",
+        "best_iou": 0.36,
+        "best_match_rank_in_episode": 1,
+        "top1_iou": 0.36,
+        "start_error_s": 6.7,
+        "end_error_s": 33.0,
+        "same_hook_line": false
+      },
+      {
+        "episode": 49,
+        "gold": "01:58.20-02:24.00",
+        "tool_candidates": 1,
+        "best_match": null,
+        "best_match_span": null,
+        "best_iou": 0.0,
+        "best_match_rank_in_episode": null,
+        "top1_iou": 0.0,
+        "start_error_s": null,
+        "end_error_s": null,
+        "same_hook_line": false
+      }
+    ]
+  },
+  "counts": {
+    "candidates": 102,
+    "valid": 95,
+    "valid_first_try": 80,
+    "repaired_ok": 15,
+    "blind_understood": 90,
+    "blind_would_watch": 93,
+    "by_proposer_model": {
+      "gemini/gemini-3.5-flash": 15,
+      "gemini/gemini-3-flash-preview": 39,
+      "gemini/gemini-3.1-flash-lite": 48
+    },
+    "avg_scores": {
+      "hook_strength": 3.43,
+      "cliffhanger_strength": 3.41,
+      "standalone_clarity": 3.89,
+      "spoiler_risk": 0.29
+    }
+  }
+}

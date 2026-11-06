@@ -1,8 +1,45 @@
-# Hand-labelled promos for evaluation. Fill ~8-10 episodes spread across the series.
-# Times are mm:ss.ss as they appear in the screenplay.
-promos: []
-# - episode: 1
-#   segments:
-#     - {start: "00:11.30", end: "00:50.00"}
-#   hook_line: "..."
-#   note: "why I picked it"
+# Gold promos: one "best promo" per episode, used to check the tool's picks.
+# DRAFTED by Claude (a different AI from the Gemini pipeline) from the transcripts only,
+# without looking at the tool's picks; then REVIEWED by Nikhil (edit anything you disagree with).
+# Times are mm:ss.ss as in the screenplay. Episodes chosen to spread across the series.
+promos:
+  - episode: 5
+    start: "00:06.80"
+    end: "00:58.20"
+    hook_line: "You will not leave this church carrying the Ashcroft name."
+    note: "Father disowns her on the church steps; cuts as her mother's ledger hits the mud."
+  - episode: 9
+    start: "00:06.30"
+    end: "00:55.20"
+    hook_line: "Please! They told me there was a woman here who knows herbs."
+    note: "Frantic mother bursts in with a dying child; cuts on 'Wait.' before the fever breaks."
+  - episode: 12
+    start: "00:26.80"
+    end: "01:09.20"
+    hook_line: "You planted it!"
+    note: "Frame-up and sadistic ultimatum; cuts on 'your husband hangs from the gallows.'"
+  - episode: 20
+    start: "00:15.40"
+    end: "00:42.40"
+    hook_line: "'Practically' is a word for beggars. I do not marry a practical Duke."
+    note: "Weak episode; villains' plot, cuts on 'I've ensured her quiet comfort' (poison hint)."
+  - episode: 28
+    start: "00:12.70"
+    end: "00:48.00"
+    hook_line: "She looks exactly like a poisoner."
+    note: "Juliana framed; the Duchess starts to name the real poisoners and collapses mid-sentence."
+  - episode: 35
+    start: "01:47.00"
+    end: "02:30.00"
+    hook_line: "I was shot. Left for dead."
+    note: "Presumed-dead son explains the ambush; cuts on 'the same men ruling Ashwood now.'"
+  - episode: 42
+    start: "00:11.20"
+    end: "00:39.80"
+    hook_line: "Who are you?"
+    note: "Duke returns, guards refuse to arrest him. Big spoiler: post later in the campaign."
+  - episode: 49
+    start: "01:58.20"
+    end: "02:24.00"
+    hook_line: "Careful men still hang, my lady"
+    note: "Talky episode; the treason pact is the only tension. Expected weak promo."

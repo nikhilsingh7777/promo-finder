@@ -195,6 +195,30 @@ def run(
 
 
 @app.command()
+def evaluate(
+    run: Path = typer.Option(Path("outputs/full"), help="Run folder to evaluate"),
+    baseline: Path = typer.Option(Path("outputs/baseline"), help="No-LLM run to compare"),
+    gold: Path = typer.Option(Path("eval/gold.yaml"), help="Hand-picked promos"),
+    out: Path = typer.Option(Path("eval/results")),
+    config: Path = typer.Option(Path("config.yaml")),
+) -> None:
+    """Score a run against gold labels and the baseline; write failures.md (no LLM)."""
+    from .config import load_config
+    from .evaluate import evaluate as do_eval
+    from .evaluate import write_facts
+
+    res = do_eval(run, baseline, gold, load_config(str(config))["promo_rules"], out)
+    write_facts(run, res, Path("docs/facts.md"))
+    console.print_json(json.dumps({k: v for k, v in res.items() if k != "gold_llm"
+                                   and k != "gold_baseline"}))
+    for key in ("gold_llm", "gold_baseline"):
+        if key in res:
+            console.print(f"[bold]{key}[/bold]: {res[key]['summary']}")
+    console.print(f"[green]Written: {out}/eval_results.json, {out}/failures.md, "
+                  f"docs/facts.md[/green]")
+
+
+@app.command()
 def ping(config: Path = typer.Option(Path("config.yaml")),
          timeout: int = typer.Option(30, help="Seconds to wait per model")) -> None:
     """Test each configured model with a tiny call; shows which ones answer and how fast."""

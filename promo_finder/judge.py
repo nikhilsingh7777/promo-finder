@@ -11,7 +11,7 @@ from rich.console import Console
 from .llm import LLMClient, LLMError
 from .models import BlindResponse, Candidate, Episode, EventType, JudgeResponse
 from .normalize import render_event
-from .propose import load_prompt
+from .propose import load_prompt, rule_vars
 
 console = Console()
 
@@ -45,7 +45,7 @@ def series_notes(episodes: dict[int, Episode], ep_no: int, ahead: int = 3) -> st
 
 
 def judge_episode(cands: list[Candidate], episodes: dict[int, Episode], llm: LLMClient,
-                  ep_no: int) -> None:
+                  ep_no: int, cfg: dict | None = None) -> None:
     valid = [c for c in cands if c.validation and c.validation.passed]
     if not valid:
         return
@@ -54,10 +54,14 @@ def judge_episode(cands: list[Candidate], episodes: dict[int, Episode], llm: LLM
         after = "\n".join(c.after_cut) or "(the episode ends here)"
         blocks.append(f"### CLIP {c.id} ({c.validation.duration:.0f} s)\n"
                       f"{clip_text(c, episodes)}\nRIGHT AFTER THE CUT (not in clip):\n{after}")
+    cfg = cfg or {}
+    ahead = cfg.get("generation", {}).get("spoiler_lookahead_episodes", 3)
     user = (f"SERIES NOTES (this episode and the next few, for spoiler checks):\n"
-            f"{series_notes(episodes, ep_no)}\n\n" + "\n\n".join(blocks))
+            f"{series_notes(episodes, ep_no, ahead)}\n\n" + "\n\n".join(blocks))
     try:
-        resp = llm.json_call("judge", load_prompt("judge_v1.md"), user, JudgeResponse,
+        judge_sys = load_prompt("judge_v1.md", **rule_vars(cfg["promo_rules"])) if cfg \
+            else load_prompt("judge_v1.md")
+        resp = llm.json_call("judge", judge_sys, user, JudgeResponse,
                              tag=f"judge:ep{ep_no}")
         by_id = {s.candidate_id: s for s in resp.scores}
         for c in valid:

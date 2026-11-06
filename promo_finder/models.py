@@ -114,6 +114,7 @@ class Candidate(BaseModel):
     after_cut: list[str] = Field(default_factory=list)   # what happens right after the promo
     validation: Validation | None = None
     repair_attempts: int = 0
+    proposer_model: str = ""
     history: list[dict] = Field(default_factory=list)    # earlier failed versions + errors
     scores: dict = Field(default_factory=dict)
     blind_test: dict = Field(default_factory=dict)

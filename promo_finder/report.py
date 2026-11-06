@@ -34,20 +34,21 @@ def row(c: Candidate) -> dict:
     r["blind_confusions"] = "; ".join(bt.get("confusions", []))
     r["warnings"] = "; ".join(c.validation.warnings) if c.validation else ""
     r["repairs"] = c.repair_attempts
+    r["proposer_model"] = c.proposer_model
     return r
 
 
 def write_reports(run_dir: Path, ranked: list[Candidate], all_cands: list[Candidate],
                   editor: dict | None, stats: dict, final_n: int) -> None:
-    final = ranked[:final_n]
-    rows = [row(c) for c in final]
+    final = ranked[:final_n]            # highlighted in the markdown report
+    rows = [row(c) for c in ranked]     # CSV/JSON: every ranked promo across all episodes
     with open(run_dir / "promos_ranked.csv", "w", newline="", encoding="utf-8") as f:
         if rows:
             w = csv.DictWriter(f, fieldnames=list(rows[0]))
             w.writeheader()
             w.writerows(rows)
     full = []
-    for c in final:
+    for c in ranked:
         d = row(c)
         d["segments_detail"] = [{"episode": s.ep, "start": fmt_time(s.start),
                                  "end": fmt_time(s.end), "start_s": s.start, "end_s": s.end,

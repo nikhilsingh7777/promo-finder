@@ -12,11 +12,13 @@ models:
   roster: "gemini/gemini-3.5-flash"
   editor: "gemini/gemini-3.5-flash"
   # Per-role fallback chains, tried in order when a model is out of quota or overloaded.
-  # Proposer/editor never fall back to the lite model: better to stop and resume than to
-  # silently produce weaker picks (see docs/model_comparison.md).
+  # Strong models first; groq/* is used only if GROQ_API_KEY is set; the lite model is the
+  # last resort so a free-tier run can finish in one day. Every candidate records which model
+  # proposed it (column proposer_model), see docs/model_comparison.md for the quality gap.
   fallbacks:
     proposer: ["gemini/gemini-3-flash-preview", "gemini/gemini-3.8-flash",
-               "gemini/gemini-3.7-flash", "gemini/gemini-3.6-flash", "gemini/gemini-flash-latest"]
+               "gemini/gemini-3.7-flash", "gemini/gemini-3.6-flash", "gemini/gemini-flash-latest",
+               "groq/openai/gpt-oss-120b", "gemini/gemini-3.1-flash-lite"]
     editor: ["gemini/gemini-3-flash-preview", "gemini/gemini-3.8-flash",
              "gemini/gemini-3.7-flash", "gemini/gemini-3.1-flash-lite"]
     judge: ["gemini/gemini-3-flash-preview", "gemini/gemini-3.8-flash"]
@@ -40,6 +42,8 @@ promo_rules:
   target_min_s: 28
   target_max_s: 56
   hook_window_s: 3.0
+  cliff_tail_max_s: 4.0          # clip must end within this long after the cliffhanger
+  after_cut_events: 3            # lines shown to the judge from right after the cut
   max_segments: 3
   lead_in_s: 0.3
   tail_s: 0.4
@@ -48,10 +52,11 @@ promo_rules:
 generation:
   max_candidates_per_episode: 3
   context_prev_episodes: 4
+  spoiler_lookahead_episodes: 3   # judge checks spoilers against this many later loglines
   repair_attempts: 2
 
 ranking:
-  final_n: 30
+  final_n: 30                     # highlighted in ranking_report.md; CSV/JSON hold ALL ranked promos
   editor_note_top_k: 10
   weights:
     hook: 0.30

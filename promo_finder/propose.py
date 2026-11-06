@@ -16,6 +16,15 @@ console = Console()
 PROMPTS = Path(__file__).resolve().parent.parent / "prompts"
 
 
+def rule_vars(rules: dict) -> dict:
+    """Rule numbers shown to the LLM come from config.yaml, same as the ones code enforces."""
+    fmt = lambda x: f"{x:g}"  # noqa: E731
+    return {"target_min": fmt(rules["target_min_s"]), "target_max": fmt(rules["target_max_s"]),
+            "min_dur": fmt(rules["min_duration_s"]), "max_dur": fmt(rules["max_duration_s"]),
+            "hook_window": fmt(rules["hook_window_s"]),
+            "cliff_tail": fmt(rules["cliff_tail_max_s"])}
+
+
 def load_prompt(name: str, **vars) -> str:
     text = (PROMPTS / name).read_text(encoding="utf-8")
     for k, v in vars.items():
@@ -27,7 +36,7 @@ def propose_episode(ep: Episode, episodes: dict[int, Episode], roster: list[dict
                     llm: LLMClient, cfg: dict) -> list[Candidate]:
     rules, gen = cfg["promo_rules"], cfg["generation"]
     system = load_prompt("proposer_v1.md", max_candidates=gen["max_candidates_per_episode"],
-                         target_min=rules["target_min_s"], target_max=rules["target_max_s"])
+                         **rule_vars(rules))
     transcript = render_transcript(ep)
     user = (f"CHARACTERS (canonical name and other labels used for them):\n"
             f"{roster_text(roster)}\n\nSTORY SO FAR:\n"
@@ -39,9 +48,11 @@ def propose_episode(ep: Episode, episodes: dict[int, Episode], roster: list[dict
     except LLMError as e:
         console.print(f"[red]ep {ep.number}: proposer failed: {e}[/red]")
         return []
+    used = llm.last_model
     out = []
     for i, pc in enumerate(resp.candidates[: gen["max_candidates_per_episode"]], 1):
-        cand = Candidate(id=f"E{ep.number:02d}-C{i}", episodes=[ep.number], proposal=pc)
+        cand = Candidate(id=f"E{ep.number:02d}-C{i}", episodes=[ep.number], proposal=pc,
+                         proposer_model=used)
         validate(cand, episodes, rules)
         cand = repair_loop(cand, ep, episodes, transcript, llm, cfg)
         out.append(cand)
@@ -51,8 +62,7 @@ def propose_episode(ep: Episode, episodes: dict[int, Episode], roster: list[dict
 def repair_loop(cand: Candidate, ep: Episode, episodes: dict[int, Episode], transcript: str,
                 llm: LLMClient, cfg: dict) -> Candidate:
     rules = cfg["promo_rules"]
-    system = load_prompt("repair_v1.md", target_min=rules["target_min_s"],
-                         target_max=rules["target_max_s"])
+    system = load_prompt("repair_v1.md", **rule_vars(rules))
     for attempt in range(1, cfg["generation"]["repair_attempts"] + 1):
         if cand.validation and cand.validation.passed:
             break

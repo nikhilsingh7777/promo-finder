@@ -31,6 +31,19 @@ class LLMError(RuntimeError):
     pass
 
 
+PROVIDER_KEYS = {"groq/": "GROQ_API_KEY", "openrouter/": "OPENROUTER_API_KEY",
+                 "gemini/": "GEMINI_API_KEY"}
+
+
+def _has_key(model: str) -> bool:
+    """Skip fallback models whose provider has no real key in .env."""
+    for prefix, env in PROVIDER_KEYS.items():
+        if model.startswith(prefix):
+            v = os.getenv(env, "")
+            return bool(v) and v != "your_key_here"
+    return True
+
+
 def _short(err: str) -> str:
     """Keep the useful part of long provider errors (the 'message' field if present)."""
     m = re.search(r'"message":\s*"([^"]{0,300})', err)
@@ -65,6 +78,7 @@ class LLMClient:
             self._cache = diskcache.Cache(self.llm_cfg["cache_dir"])
         self._lock = threading.Lock()
         self._exhausted: set[str] = set()
+        self.last_model = ""
         self._last_call = 0.0
         self.usage = {"calls": 0, "cached": 0, "prompt_tokens": 0, "completion_tokens": 0,
                       "errors": 0}
@@ -120,7 +134,7 @@ class LLMClient:
         fb = self.models.get("fallbacks") or []
         if isinstance(fb, dict):
             fb = fb.get(role or "", fb.get("default", []))
-        return [model] + [m for m in fb if m != model]
+        return [m for m in [model] + [x for x in fb if x != model] if _has_key(m)]
 
     def _call_with_fallback(self, model: str, messages: list[dict], temperature: float,
                             tag: str, timeout: float | None = None, retries: int | None = None,
@@ -166,7 +180,13 @@ class LLMClient:
         key = self._key(model, messages, temperature)
         if self._cache is not None and key in self._cache:
             self.usage["cached"] += 1
-            return self._cache[key]
+            hit = self._cache[key]
+            if isinstance(hit, dict):
+                self.last_model = hit.get("model", model)
+                return hit["text"]
+            self.last_model = model
+            return hit
+        used = model
         if self.fake is not None:
             text, usage = self.fake(model, messages), {}
         else:
@@ -176,8 +196,9 @@ class LLMClient:
         self.usage["calls"] += 1
         self.usage["prompt_tokens"] += usage.get("prompt_tokens", 0) or 0
         self.usage["completion_tokens"] += usage.get("completion_tokens", 0) or 0
+        self.last_model = used
         if self._cache is not None:
-            self._cache[key] = text
+            self._cache[key] = {"text": text, "model": used}
         self._log(tag, model, messages, text, usage)
         return text
 
