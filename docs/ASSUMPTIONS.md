@@ -9,3 +9,4 @@ Record each assumption where the brief is silent: what you assumed, why, and how
 | 3 | LADY IN GOLD GOWN = CLARISSA, THE FORMER GROOM = GERALD, NOBLE MATRIARCH = MATRIARCH | Checked by reading Episodes 1 and 3 | Same character keeps one name across episodes |
 | 4 | Events slightly outside their scene's bounds are kept, with a warning | Only 1 case (Ep 22, 0.3 s over); likely an authoring slip | No data lost |
 | 5 | Episodes can be 70-200 s, not only 60-120 s | Measured in corpus profile | Promo length limits stay 20-60 s regardless |
+| 6 | A promo may end exactly at the episode's end | The episode's own ending is written as a cliffhanger | Flagged as a warning, not rejected; the judge decides if it lands |

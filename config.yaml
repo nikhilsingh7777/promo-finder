@@ -1,18 +1,29 @@
 # All tunables live here. Model IDs are placeholders: set real ones before running.
 # Any LiteLLM model string works (e.g. "<provider>/<model-id>"); swap models here, never in code.
 models:
-  proposer: "gemini/REPLACE_WITH_MODEL_ID"
-  judge: "gemini/REPLACE_WITH_MODEL_ID"        # ideally a different provider than proposer
-  blind_viewer: "gemini/REPLACE_WITH_MODEL_ID"
-  roster: "gemini/REPLACE_WITH_MODEL_ID"
-  editor: "gemini/REPLACE_WITH_MODEL_ID"
+  # Check what your key can use with: python -m promo_finder models
+  # Override any role without editing this file: PROMO_MODEL_PROPOSER=..., or PROMO_MODEL=... for all.
+  # Chosen with `python -m promo_finder ping` on 2026-11-06: 3.5-flash and 3.1-flash-lite answered;
+  # 3.8-flash and flash-latest returned 503 (overloaded); 2.5-flash(-lite) are 404 for new keys.
+  proposer: "gemini/gemini-3.5-flash"
+  judge: "gemini/gemini-3.5-flash"              # ideally a different provider than proposer
+  blind_viewer: "gemini/gemini-3.1-flash-lite"  # a different, cheaper model reads the clip "cold"
+  roster: "gemini/gemini-3.5-flash"
+  editor: "gemini/gemini-3.5-flash"
+  # Tried in order when the role's model is down (timeout / 503) or not available to this key.
+  fallbacks:
+    - "gemini/gemini-3.8-flash"
+    - "gemini/gemini-flash-latest"
+    - "gemini/gemini-3.1-flash-lite"
   api_base: null                                # optional OpenAI-compatible endpoint override
 
 llm:
   temperature_proposer: 0.3
   temperature_judge: 0.0
-  max_retries: 3
-  requests_per_minute: 10                       # free-tier safe default
+  max_retries: 2
+  preflight_timeout_s: 30
+  timeout_s: 90                                 # per call; a hung request fails instead of blocking
+  requests_per_minute: 5                        # free tier is ~5-10 RPM per project
   concurrency: 2
   cache_dir: "cache/"
 
