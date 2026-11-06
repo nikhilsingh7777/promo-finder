@@ -8,8 +8,8 @@ in order, the hook, the cliffhanger, one line on why it works, a score, and a su
 Built for the Kuku AI Generalist assignment, Problem 1 (*Find the Promos*).
 The episode screenplays are confidential and are **not** in this repo.
 
-> **Links:** Solution doc (PDF) · Raw outputs of the full 50-episode run (Drive) · Walkthrough video
-> *(filled in on the submission form)*
+> **Live viewer:** https://promo-finder-cwrwhmbplzcjof9k6umyw7.streamlit.app (browse the ranked promos, no key needed)
+> **Links:** Solution doc (PDF) · Raw outputs of the full 50-episode run (Drive) · Walkthrough video *(on the submission form)*
 
 ---
 
@@ -28,7 +28,7 @@ Against 8 hand-marked gold promos (episodes 5, 9, 12, 20, 28, 35, 42, 49), score
 | Mean IoU | **0.68** | 0.43 |
 | Mean error at the clip's end | **4.8 s** | 19.3 s |
 
-Top of the ranked list (`samples/promos_ranked_top10.csv` has the first 10 rows; the full
+Top of the ranked list (`samples/promos_ranked_full.csv` has all 90 rows; the full
 90-row output is in the Drive folder):
 
 | # | Episode · segments | Hook (first 3 s) | Cliffhanger |
@@ -125,7 +125,7 @@ weights and penalties) lives in `config.yaml` and is fed into the prompts from t
 | `llm_raw/calls.jsonl`, `errors.jsonl` | Every prompt and raw response, token usage, provider errors |
 | `run_stats.json` | Counts, models used, tokens, timing, config hash, git commit |
 
-`samples/` holds the top-10 CSV and the ranking report from the full run, so you can see the
+`samples/` holds the full ranked CSV, a top-10 CSV and the ranking report from the full run, so you can see the
 output shape without running anything.
 
 ---
@@ -170,7 +170,7 @@ config/           roster_overrides.yaml (hand-mapped character aliases)
 tests/            32 tests, no API key needed
 eval/             gold.yaml, failure_analysis.md, results/
 docs/             ASSUMPTIONS.md · AI_MISTAKES.md · model_comparison.md · facts.md · corpus_profile.md
-samples/          top-10 CSV and ranking report from the full run
+samples/          ranked CSVs and ranking report from the full run
 scripts/          profile_corpus.py
 ```
 

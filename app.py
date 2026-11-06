@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-SAMPLE = Path(__file__).parent / "samples" / "promos_ranked_top10.csv"
+SAMPLE = Path(__file__).parent / "samples" / "promos_ranked_full.csv"
 REPORT = Path(__file__).parent / "samples" / "ranking_report.md"
 
 st.set_page_config(page_title="Promo Finder", page_icon="🎬", layout="wide")
@@ -24,7 +24,7 @@ st.caption(
 with st.sidebar:
     st.header("Data")
     up = st.file_uploader("promos_ranked.csv from any run", type="csv")
-    st.markdown("No file: shows the top 10 from the full 50-episode run.")
+    st.markdown("No file: shows all 90 promos from the full 50-episode run.")
     st.markdown("[Source on GitHub](https://github.com/nikhilsingh7777/promo-finder)")
 
 df = pd.read_csv(up) if up is not None else pd.read_csv(SAMPLE)
