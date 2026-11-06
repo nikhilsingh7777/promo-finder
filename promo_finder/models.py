@@ -119,3 +119,39 @@ class Candidate(BaseModel):
     blind_test: dict = Field(default_factory=dict)
     composite: float | None = None
     rank: int | None = None
+
+
+class JudgeScore(BaseModel):
+    candidate_id: str
+    hook_strength: int = 1
+    cliffhanger_strength: int = 1
+    standalone_clarity: int = 1
+    emotional_intensity: int = 1
+    shareability: int = 1
+    spoiler_risk: int = 0
+    answer_inside_clip: bool = False
+    reason: str = ""
+
+
+class JudgeResponse(BaseModel):
+    scores: list[JudgeScore] = Field(default_factory=list)
+
+
+class BlindResult(BaseModel):
+    candidate_id: str
+    main_people: str = ""
+    conflict: str = ""
+    confusions: list[str] = Field(default_factory=list)
+    want_next: str = ""
+    keep_watching: bool = False
+    understood: bool = False
+
+
+class BlindResponse(BaseModel):
+    results: list[BlindResult] = Field(default_factory=list)
+
+
+class EditorResponse(BaseModel):
+    order: list[str] = Field(default_factory=list)
+    notes: dict[str, str] = Field(default_factory=dict)
+    near_duplicates: list[list[str]] = Field(default_factory=list)

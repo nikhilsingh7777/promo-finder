@@ -110,3 +110,44 @@ def test_repair_loop_fixes_a_too_long_candidate():
 def test_camera_shot_cannot_be_the_hook():
     v = check(cand(ID(1), ID(16), ID(1), ID(16)))      # ID(1) is a CAMERA event
     assert any("camera shot" in e for e in v.errors)
+
+
+def test_fallback_moves_to_next_model_when_first_fails():
+    from promo_finder.llm import LLMError
+    cfg = yaml.safe_load(open("config.yaml"))
+    cfg["llm"]["cache_dir"] = None
+    cfg["models"]["fallbacks"] = {"default": ["m2"]}
+    llm = LLMClient(cfg)
+    calls = []
+
+    def fake_provider(model, messages, temperature, timeout=None, retries=None):
+        calls.append(model)
+        if model == "m1":
+            raise LLMError("RateLimitError: quota")
+        return '{"candidates": []}', {"prompt_tokens": 1, "completion_tokens": 1}
+
+    llm._call_provider = fake_provider
+    text, usage, used = llm._call_with_fallback("m1", [{"role": "user", "content": "x"}], 0, "t")
+    assert used == "m2" and calls == ["m1", "m2"]
+
+
+def test_role_fallback_chains_and_quota_memory():
+    from promo_finder.llm import LLMError
+    cfg = yaml.safe_load(open("config.yaml"))
+    cfg["llm"]["cache_dir"] = None
+    cfg["models"]["fallbacks"] = {"proposer": ["strong2"], "judge": ["lite2"]}
+    llm = LLMClient(cfg)
+    assert llm.chain("strong1", "proposer") == ["strong1", "strong2"]
+    assert llm.chain("lite1", "judge") == ["lite1", "lite2"]
+    calls = []
+
+    def fake_provider(model, messages, temperature, timeout=None, retries=None):
+        calls.append(model)
+        if model == "strong1":
+            raise LLMError("RateLimitError: You exceeded your current quota")
+        return "{}", {}
+
+    llm._call_provider = fake_provider
+    llm._call_with_fallback("strong1", [], 0, "a", role="proposer")
+    llm._call_with_fallback("strong1", [], 0, "b", role="proposer")
+    assert calls == ["strong1", "strong2", "strong2"]      # exhausted model skipped next time

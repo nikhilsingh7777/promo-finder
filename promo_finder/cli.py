@@ -103,7 +103,7 @@ def propose(
     llm = LLMClient(cfg, log_dir=run_dir / "llm_raw")
     try:
         used = llm.preflight("proposer")
-        console.print(f"Model check ok: {used}")
+        console.print(f"Model check: {used}")
     except LLMError as e:
         console.print(f"[red]Model check failed: {e}[/red]\n"
                       "Fix: run `python -m promo_finder models`, pick a listed model, and set it "
@@ -157,6 +157,44 @@ def _write_summary(path: Path, cands) -> None:
 
 
 @app.command()
+def run(
+    input: Path = typer.Option(Path("data/episodes"), help="Folder of episode .txt files"),
+    episodes: str = typer.Option(None, help="Episodes to run, e.g. '1-10' (default: all)"),
+    out: Path = typer.Option(Path("outputs"), help="Parent folder for run output"),
+    run_id: str = typer.Option(None, help="Run folder name; reuse it to resume a run"),
+    no_llm: bool = typer.Option(False, "--no-llm", help="Heuristic baseline, no API needed"),
+    config: Path = typer.Option(Path("config.yaml")),
+    overrides: Path = typer.Option(Path("config/roster_overrides.yaml")),
+) -> None:
+    """Full pipeline: find, check, score and rank promos; write reports."""
+    from dotenv import load_dotenv
+
+    from .config import load_config
+    from .llm import LLMError
+    from .pipeline import run_pipeline
+
+    load_dotenv()
+    cfg = load_config(str(config))
+    eps, roster = load_show(input, overrides)
+    todo = _range(episodes, sorted(eps))
+    default = ("baseline_" if no_llm else "run_") + time.strftime("%Y%m%d_%H%M%S")
+    run_dir = out / (run_id or default)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    console.print(f"Episodes {todo[0]}-{todo[-1]} ({len(todo)}), output {run_dir}")
+    try:
+        ranked = run_pipeline(eps, roster, todo, cfg, run_dir, no_llm=no_llm)
+    except LLMError as e:
+        console.print(f"[red]{e}[/red]\nRe-run the same command with --run-id "
+                      f"{run_dir.name} to resume.")
+        raise typer.Exit(1) from None
+    console.print(f"[green]{len(ranked)} ranked promos. Open {run_dir}/ranking_report.md[/green]")
+    for c in ranked[:5]:
+        segs = " + ".join(f"ep{s.ep} {fmt_time(s.start)}-{fmt_time(s.end)}" for s in c.segments)
+        console.print(f"  #{c.rank} {c.id} {segs} ({c.validation.duration:.0f} s) "
+                      f"score {c.composite}")
+
+
+@app.command()
 def ping(config: Path = typer.Option(Path("config.yaml")),
          timeout: int = typer.Option(30, help="Seconds to wait per model")) -> None:
     """Test each configured model with a tiny call; shows which ones answer and how fast."""
@@ -168,9 +206,10 @@ def ping(config: Path = typer.Option(Path("config.yaml")),
     load_dotenv()
     cfg = load_config(str(config))
     llm = LLMClient(cfg)
+    fb = cfg["models"].get("fallbacks") or []
+    fb = [m for v in fb.values() for m in v] if isinstance(fb, dict) else fb
     models_ = list(dict.fromkeys([cfg["models"][r] for r in
-                                  ("proposer", "judge", "blind_viewer")] +
-                                 (cfg["models"].get("fallbacks") or [])))
+                                  ("proposer", "judge", "blind_viewer")] + fb))
     for m in models_:
         t0 = time.time()
         try:

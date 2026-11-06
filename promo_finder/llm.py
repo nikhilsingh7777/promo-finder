@@ -31,6 +31,12 @@ class LLMError(RuntimeError):
     pass
 
 
+def _short(err: str) -> str:
+    """Keep the useful part of long provider errors (the 'message' field if present)."""
+    m = re.search(r'"message":\s*"([^"]{0,300})', err)
+    return (m.group(1) if m else err)[:300]
+
+
 def extract_json(text: str) -> str:
     """Pull the JSON object out of a reply that may be wrapped in ``` fences or prose."""
     text = text.strip()
@@ -58,6 +64,7 @@ class LLMClient:
             import diskcache
             self._cache = diskcache.Cache(self.llm_cfg["cache_dir"])
         self._lock = threading.Lock()
+        self._exhausted: set[str] = set()
         self._last_call = 0.0
         self.usage = {"calls": 0, "cached": 0, "prompt_tokens": 0, "completion_tokens": 0,
                       "errors": 0}
@@ -80,7 +87,8 @@ class LLMClient:
                 messages = messages + [{"role": "user", "content":
                     f"Your previous reply was not valid. Error: {last_err}\n"
                     "Reply again with ONLY the JSON object matching the schema."}]
-            raw = self._complete(model, messages, temperature, tag=f"{tag}#try{attempt}")
+            raw = self._complete(model, messages, temperature, tag=f"{tag}#try{attempt}",
+                                 role=role)
             try:
                 return schema.model_validate_json(extract_json(raw))
             except (ValueError, ValidationError) as e:
@@ -89,31 +97,49 @@ class LLMClient:
         raise LLMError(f"{role}: invalid JSON after retry: {last_err}")
 
     def preflight(self, role: str) -> str:
-        """Tiny uncached call so a wrong model/key fails fast. Returns the model that answered."""
-        if self.fake is not None:
-            return self.model_for(role)
-        _, _, used = self._call_with_fallback(
-            self.model_for(role), [{"role": "user", "content": "Reply with: ok"}], 0.0,
-            "preflight", timeout=self.llm_cfg.get("preflight_timeout_s", 30), retries=0)
-        self.models[role] = used          # stick with the model that works for this run
-        return used
+        """One tiny call to the role's primary model so a wrong name or key fails fast.
 
-    def chain(self, model: str) -> list[str]:
-        rest = [m for m in (self.models.get("fallbacks") or []) if m != model]
-        return [model] + rest
+        Quota/overload errors only warn: the fallback chain handles them during the run.
+        It never walks the chain, because every try costs one request of a 20/day quota.
+        """
+        model = self.model_for(role)
+        if self.fake is not None:
+            return model
+        try:
+            self._call_provider(model, [{"role": "user", "content": "Reply with: ok"}], 0.0,
+                                timeout=self.llm_cfg.get("preflight_timeout_s", 30), retries=0)
+            return model
+        except LLMError as e:
+            if re.search(r"NotFound|Authentication|PermissionDenied|API key", str(e)):
+                raise
+            print(f"  [llm] {model} not available right now ({_short(str(e))[:80]}); "
+                  f"the run will use its fallback chain", flush=True)
+            return "unavailable"
+
+    def chain(self, model: str, role: str | None = None) -> list[str]:
+        fb = self.models.get("fallbacks") or []
+        if isinstance(fb, dict):
+            fb = fb.get(role or "", fb.get("default", []))
+        return [model] + [m for m in fb if m != model]
 
     def _call_with_fallback(self, model: str, messages: list[dict], temperature: float,
-                            tag: str, timeout: float | None = None, retries: int | None = None
-                            ) -> tuple[str, dict, str]:
+                            tag: str, timeout: float | None = None, retries: int | None = None,
+                            role: str | None = None) -> tuple[str, dict, str]:
         errors = []
-        for m in self.chain(model):
+        for m in self.chain(model, role):
+            if m in self._exhausted:
+                continue
             t0 = time.monotonic()
             print(f"  [llm] {tag} -> {m} ...", flush=True)
             try:
                 text, usage = self._call_provider(m, messages, temperature, timeout, retries)
             except LLMError as e:
-                print(f"  [llm] {m} failed: {str(e)[:160]}", flush=True)
-                errors.append(str(e)[:200])   # down, overloaded or not allowed: try the next model
+                print(f"  [llm] {m} failed: {_short(str(e))}", flush=True)
+                errors.append(str(e)[:300])
+                self._log_error(tag, m, str(e))
+                if re.search(r"quota|per ?day|PerDay|NotFound", str(e), re.I):
+                    self._exhausted.add(m)   # don't spend time on it again this run
+                continue                     # down, overloaded, out of quota: try the next model
             print(f"  [llm] {tag} done by {m} in {time.monotonic() - t0:.0f} s "
                   f"({usage.get('prompt_tokens', 0)} in / "
                   f"{usage.get('completion_tokens', 0)} out tokens)", flush=True)
@@ -135,7 +161,8 @@ class LLMClient:
                 time.sleep(wait)
             self._last_call = time.monotonic()
 
-    def _complete(self, model: str, messages: list[dict], temperature: float, tag: str) -> str:
+    def _complete(self, model: str, messages: list[dict], temperature: float, tag: str,
+                  role: str | None = None) -> str:
         key = self._key(model, messages, temperature)
         if self._cache is not None and key in self._cache:
             self.usage["cached"] += 1
@@ -143,7 +170,8 @@ class LLMClient:
         if self.fake is not None:
             text, usage = self.fake(model, messages), {}
         else:
-            text, usage, used = self._call_with_fallback(model, messages, temperature, tag)
+            text, usage, used = self._call_with_fallback(model, messages, temperature, tag,
+                                                         role=role)
             usage = {**usage, "model_used": used}
         self.usage["calls"] += 1
         self.usage["prompt_tokens"] += usage.get("prompt_tokens", 0) or 0
@@ -165,7 +193,10 @@ class LLMClient:
 
         def transient(e: BaseException) -> bool:
             name = type(e).__name__
-            return any(s in name for s in ("RateLimit", "Timeout", "ServiceUnavailable",
+            if "RateLimit" in name:
+                # per-day quota will not recover by waiting: let the fallback chain take over
+                return not re.search(r"per ?day|PerDay|daily", str(e), re.I)
+            return any(s in name for s in ("Timeout", "ServiceUnavailable",
                                            "InternalServer", "APIConnection"))
 
         def say_retry(state) -> None:
@@ -175,7 +206,7 @@ class LLMClient:
                   f"{state.attempt_number} in {wait:.0f} s", flush=True)
 
         @retry(retry=retry_if_exception(transient),
-               wait=wait_exponential(multiplier=4, min=8, max=90),
+               wait=wait_exponential(multiplier=8, min=15, max=90),
                stop=stop_after_attempt(
                    (self.llm_cfg.get("max_retries", 3) if retries is None else retries) + 1),
                before_sleep=say_retry, reraise=True)
@@ -201,6 +232,14 @@ class LLMClient:
         usage = {"prompt_tokens": getattr(u, "prompt_tokens", 0),
                  "completion_tokens": getattr(u, "completion_tokens", 0)} if u else {}
         return text, usage
+
+    def _log_error(self, tag: str, model: str, err: str) -> None:
+        if not self.log_dir:
+            return
+        rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "tag": tag, "model": model,
+               "error": err[:2000]}
+        with open(self.log_dir / "errors.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
     def _log(self, tag: str, model: str, messages: list[dict], text: str, usage: dict) -> None:
         if not self.log_dir:

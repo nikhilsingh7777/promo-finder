@@ -3,18 +3,25 @@
 models:
   # Check what your key can use with: python -m promo_finder models
   # Override any role without editing this file: PROMO_MODEL_PROPOSER=..., or PROMO_MODEL=... for all.
-  # Chosen with `python -m promo_finder ping` on 2026-11-06: 3.5-flash and 3.1-flash-lite answered;
-  # 3.8-flash and flash-latest returned 503 (overloaded); 2.5-flash(-lite) are 404 for new keys.
+  # Free tier (checked on ai.dev/rate-limit, 2026-11-06): each strong Flash model = 20 requests/day,
+  # 3.1-flash-lite = 500/day. So strong models only propose (rotating to add up their quotas);
+  # lite judges and plays the blind viewer. 2.5-flash is 404 for new keys.
   proposer: "gemini/gemini-3.5-flash"
-  judge: "gemini/gemini-3.5-flash"              # ideally a different provider than proposer
-  blind_viewer: "gemini/gemini-3.1-flash-lite"  # a different, cheaper model reads the clip "cold"
+  judge: "gemini/gemini-3.1-flash-lite"         # different model from proposer: no self-grading
+  blind_viewer: "gemini/gemini-3.1-flash-lite"  # cheap model reads the clip "cold"
   roster: "gemini/gemini-3.5-flash"
   editor: "gemini/gemini-3.5-flash"
-  # Tried in order when the role's model is down (timeout / 503) or not available to this key.
+  # Per-role fallback chains, tried in order when a model is out of quota or overloaded.
+  # Proposer/editor never fall back to the lite model: better to stop and resume than to
+  # silently produce weaker picks (see docs/model_comparison.md).
   fallbacks:
-    - "gemini/gemini-3.8-flash"
-    - "gemini/gemini-flash-latest"
-    - "gemini/gemini-3.1-flash-lite"
+    proposer: ["gemini/gemini-3-flash-preview", "gemini/gemini-3.8-flash",
+               "gemini/gemini-3.7-flash", "gemini/gemini-3.6-flash", "gemini/gemini-flash-latest"]
+    editor: ["gemini/gemini-3-flash-preview", "gemini/gemini-3.8-flash",
+             "gemini/gemini-3.7-flash", "gemini/gemini-3.1-flash-lite"]
+    judge: ["gemini/gemini-3-flash-preview", "gemini/gemini-3.8-flash"]
+    blind_viewer: ["gemini/gemini-3-flash-preview"]
+    roster: ["gemini/gemini-3-flash-preview", "gemini/gemini-3.8-flash"]
   api_base: null                                # optional OpenAI-compatible endpoint override
 
 llm:
@@ -23,7 +30,7 @@ llm:
   max_retries: 2
   preflight_timeout_s: 30
   timeout_s: 90                                 # per call; a hung request fails instead of blocking
-  requests_per_minute: 5                        # free tier is ~5-10 RPM per project
+  requests_per_minute: 8                        # free tier is ~5-10 RPM per project
   concurrency: 2
   cache_dir: "cache/"
 
@@ -52,6 +59,14 @@ ranking:
     standalone: 0.20
     emotion_share: 0.15
     spoiler_safety: 0.10
+  penalties:
+    answer_inside_clip: 0.10      # judge says the clip already resolves its own question
+    blind_not_understood: 0.08    # cold viewer could not follow it
+    blind_not_hooked: 0.05        # cold viewer would not tap to watch
+    edge_duration: 0.03           # valid but outside the 28-56 s comfort band
+  same_episode_penalty: 0.04      # diversity: each earlier pick from the same episode costs this
+  early_episode_max: 5            # assumption: promos from the first episodes onboard best
+  early_episode_bonus: 0.03
 
 paths:
   episodes: "data/episodes"
