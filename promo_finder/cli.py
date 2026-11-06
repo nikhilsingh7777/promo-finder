@@ -165,9 +165,15 @@ def run(
     no_llm: bool = typer.Option(False, "--no-llm", help="Heuristic baseline, no API needed"),
     config: Path = typer.Option(Path("config.yaml")),
     overrides: Path = typer.Option(Path("config/roster_overrides.yaml")),
+    verbose: bool = typer.Option(False, "--verbose", help="Also print provider quota/retry warnings"),
 ) -> None:
     """Full pipeline: find, check, score and rank promos; write reports."""
+    import os
+
     from dotenv import load_dotenv
+
+    if verbose:
+        os.environ["PROMO_VERBOSE"] = "1"
 
     from .config import load_config
     from .llm import LLMError

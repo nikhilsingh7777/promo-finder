@@ -31,6 +31,13 @@ class LLMError(RuntimeError):
     pass
 
 
+def _warn(msg: str) -> None:
+    """Provider problems (quota, overload, retries) are logged to errors.jsonl always;
+    they are printed only with --verbose (PROMO_VERBOSE=1) to keep run output readable."""
+    if os.environ.get("PROMO_VERBOSE"):
+        print(msg, flush=True)
+
+
 PROVIDER_KEYS = {"groq/": "GROQ_API_KEY", "openrouter/": "OPENROUTER_API_KEY",
                  "gemini/": "GEMINI_API_KEY"}
 
@@ -126,8 +133,8 @@ class LLMClient:
         except LLMError as e:
             if re.search(r"NotFound|Authentication|PermissionDenied|API key", str(e)):
                 raise
-            print(f"  [llm] {model} not available right now ({_short(str(e))[:80]}); "
-                  f"the run will use its fallback chain", flush=True)
+            _warn(f"  [llm] {model} not available right now ({_short(str(e))[:80]}); "
+                  f"the run will use its fallback chain")
             return "unavailable"
 
     def chain(self, model: str, role: str | None = None) -> list[str]:
@@ -148,7 +155,7 @@ class LLMClient:
             try:
                 text, usage = self._call_provider(m, messages, temperature, timeout, retries)
             except LLMError as e:
-                print(f"  [llm] {m} failed: {_short(str(e))}", flush=True)
+                _warn(f"  [llm] {m} failed: {_short(str(e))}")
                 errors.append(str(e)[:300])
                 self._log_error(tag, m, str(e))
                 if re.search(r"quota|per ?day|PerDay|NotFound", str(e), re.I):
@@ -223,8 +230,8 @@ class LLMClient:
         def say_retry(state) -> None:
             err = state.outcome.exception() if state.outcome else None
             wait = state.next_action.sleep if state.next_action else 0
-            print(f"  [llm] {type(err).__name__} from {model}; retry "
-                  f"{state.attempt_number} in {wait:.0f} s", flush=True)
+            _warn(f"  [llm] {type(err).__name__} from {model}; retry "
+                  f"{state.attempt_number} in {wait:.0f} s")
 
         @retry(retry=retry_if_exception(transient),
                wait=wait_exponential(multiplier=8, min=15, max=90),

@@ -41,7 +41,8 @@ def run_pipeline(episodes: dict[int, Episode], roster: list[dict], todo: list[in
     llm = None if no_llm else LLMClient(cfg, log_dir=run_dir / "llm_raw")
     if llm:
         used = llm.preflight("proposer")
-        console.print(f"Model check: {used}")
+        if used != "unavailable":          # busy/out of quota: fallback chain handles it quietly
+            console.print(f"Model check: {used}")
     t0 = time.time()
     all_cands: list[Candidate] = []
     for n in todo:

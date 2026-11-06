@@ -68,6 +68,7 @@ Timestamps are read as running through the whole episode, so a cut may span scen
 ```bash
 python -m promo_finder run --run-id full                 # default input folder data/episodes/, resumable
 python -m promo_finder run --episodes 1-10 --run-id t    # a subset
+python -m promo_finder run --run-id full --verbose        # also print provider quota/retry warnings
 python -m promo_finder evaluate --run outputs/full       # gold set vs baseline, rule audit, failures.md
 python -m promo_finder ping                              # which configured models answer right now
 python -m promo_finder models                            # models your key can use
