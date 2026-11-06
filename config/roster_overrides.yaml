@@ -1,0 +1,8 @@
+# Speaker label -> canonical character. Applied after the automatic "LADY X" -> "X" rule.
+# Only mappings checked by reading the scripts go here; unsure ones are left to the roster step.
+aliases:
+  LADY IN GOLD GOWN: CLARISSA        # ep1: Matriarch gestures "toward Clarissa, who stands in gold"
+  THE FORMER GROOM: GERALD           # ep1: Juliana calls him "Gerald"; camera names him
+  NOBLE MATRIARCH: MATRIARCH         # ep1 vs ep3: same family elder, same lines of scolding
+# Unresolved (left for the LLM roster step, Phase 3):
+#   THE BEARDED STRANGER / MYSTERIOUS BEARDED MAN / SCARRED BEARDED MAN -> possibly ALEXANDER?
