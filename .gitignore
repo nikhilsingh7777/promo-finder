@@ -30,3 +30,6 @@ dist/
 .vscode/
 .idea/
 *.log
+
+# Desktop-app export folder
+Claude outputs/
