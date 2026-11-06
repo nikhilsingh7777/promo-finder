@@ -1,0 +1,32 @@
+# Confidential Kuku input pack + generated data (never commit)
+data/
+outputs/
+cache/
+feedback/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# OS / editors / logs
+.DS_Store
+.vscode/
+.idea/
+*.log

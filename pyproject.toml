@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "promo-finder"
+version = "0.1.0"
+description = "Finds ranked 20-60s promo clips in microdrama screenplays (Kuku assignment, Problem 1)."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "litellm>=1.50",
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "python-dotenv>=1.0",
+  "tenacity>=8.2",
+  "diskcache>=5.6",
+  "pandas>=2.2",
+  "streamlit>=1.38",
+  "typer>=0.12",
+  "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.setuptools]
+packages = ["promo_finder"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

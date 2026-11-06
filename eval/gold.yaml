@@ -1,0 +1,8 @@
+# Hand-labelled promos for evaluation. Fill ~8-10 episodes spread across the series.
+# Times are mm:ss.ss as they appear in the screenplay.
+promos: []
+# - episode: 1
+#   segments:
+#     - {start: "00:11.30", end: "00:50.00"}
+#   hook_line: "..."
+#   note: "why I picked it"

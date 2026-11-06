@@ -1,0 +1,47 @@
+# All tunables live here. Model IDs are placeholders: set real ones before running.
+# Any LiteLLM model string works (e.g. "<provider>/<model-id>"); swap models here, never in code.
+models:
+  proposer: "gemini/REPLACE_WITH_MODEL_ID"
+  judge: "gemini/REPLACE_WITH_MODEL_ID"        # ideally a different provider than proposer
+  blind_viewer: "gemini/REPLACE_WITH_MODEL_ID"
+  roster: "gemini/REPLACE_WITH_MODEL_ID"
+  editor: "gemini/REPLACE_WITH_MODEL_ID"
+  api_base: null                                # optional OpenAI-compatible endpoint override
+
+llm:
+  temperature_proposer: 0.3
+  temperature_judge: 0.0
+  max_retries: 3
+  requests_per_minute: 10                       # free-tier safe default
+  concurrency: 2
+  cache_dir: "cache/"
+
+promo_rules:
+  min_duration_s: 20
+  max_duration_s: 60
+  target_min_s: 28
+  target_max_s: 56
+  hook_window_s: 3.0
+  max_segments: 3
+  lead_in_s: 0.3
+  tail_s: 0.4
+  dedupe_iou: 0.3
+
+generation:
+  max_candidates_per_episode: 3
+  context_prev_episodes: 4
+  repair_attempts: 2
+
+ranking:
+  final_n: 30
+  editor_note_top_k: 10
+  weights:
+    hook: 0.30
+    cliffhanger: 0.25
+    standalone: 0.20
+    emotion_share: 0.15
+    spoiler_safety: 0.10
+
+paths:
+  episodes: "data/episodes"
+  outputs: "outputs"
