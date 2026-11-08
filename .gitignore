@@ -33,3 +33,6 @@ dist/
 
 # Desktop-app export folder
 Claude outputs/
+
+# Claude Code project rules (local only)
+CLAUDE.md
