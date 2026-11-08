@@ -179,4 +179,4 @@ scripts/          profile_corpus.py
 
 Claude Code as a pair programmer (scaffolding, tests, first drafts of docs and the gold set,
 reviewed and edited by me) and Gemini 3.5 Flash / 3 Flash / 3.1 Flash-Lite via LiteLLM inside
-the tool. Where the AI got it wrong, and what I changed, is logged in `docs/AI_MISTAKES.md`.
+the tool.
