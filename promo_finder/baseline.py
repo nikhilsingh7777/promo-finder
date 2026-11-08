@@ -1,9 +1,3 @@
-"""No-LLM baseline: keyword and punctuation heuristics.
-
-Two jobs: (1) a demo that runs with no API key (--no-llm), (2) the bar the LLM pipeline
-must clearly beat in evaluation. It uses the same validator as the LLM path.
-"""
-
 from __future__ import annotations
 
 import re
